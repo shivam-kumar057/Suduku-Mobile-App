@@ -1,0 +1,17 @@
+pluginManagement { includeBuild("../node_modules/@react-native/gradle-plugin") }
+plugins { id("com.facebook.react.settings") }
+def nodeExecutable =
+    providers.gradleProperty("reactNativeNodeExecutable")
+        .orElse("/Users/shivamkumar/.nvm/versions/node/v20.19.4/bin/node")
+        .get()
+
+extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
+    ex.autolinkLibrariesFromCommand([
+        nodeExecutable,
+        "./node_modules/@react-native-community/cli/build/bin.js",
+        "config"
+    ])
+}
+rootProject.name = 'SudokuGame'
+include ':app'
+includeBuild('../node_modules/@react-native/gradle-plugin')
