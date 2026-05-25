@@ -3,6 +3,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppRoot } from './src/app/AppRoot';
 import { useAppTheme } from './src/hooks/useAppTheme';
+import { AuthProvider } from './src/context/AuthContext';
 
 function AppContent() {
   const theme = useAppTheme();
@@ -22,7 +23,9 @@ function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <AppContent />
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

@@ -7,7 +7,9 @@ import { PrimaryButton } from '../components/PrimaryButton';
 import { StatCard } from '../components/StatCard';
 import { useGameStore } from '../store/useGameStore';
 import { useAppTheme } from '../hooks/useAppTheme';
-import { preloadAds } from '../services/ads';
+import { preloadAds, showInterstitialAd } from '../services/ads';
+import { useAuth } from '../context/AuthContext';
+import { Difficulty } from '../types/sudoku';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
@@ -20,6 +22,13 @@ export function HomeScreen({ navigation }: Props) {
   const startDailyGame = useGameStore(state => state.startDailyGame);
   const currentGame = useGameStore(state => state.currentGame);
   const stats = useGameStore(state => state.stats);
+  const { user, logout } = useAuth();
+
+  const handleStartGameWithAd = async (difficulty: Difficulty) => {
+    await showInterstitialAd();
+    startNewGame(difficulty);
+    navigation.navigate('Game');
+  };
 
   useEffect(() => {
     preloadAds();
@@ -72,7 +81,7 @@ export function HomeScreen({ navigation }: Props) {
             },
           ]}>
           <Text style={[styles.heroPillText, { color: theme.colors.text }]}>
-            Daily Challenge Ready
+            {user?.name ?? 'Player'} • {user?.coins ?? 0} coins
           </Text>
         </View>
         <Text style={[styles.title, { color: theme.colors.text }]}>Sudoku Master</Text>
@@ -141,27 +150,29 @@ export function HomeScreen({ navigation }: Props) {
           },
         ]}>
         <PrimaryButton
+          label="Play Online"
+          fullWidth
+          onPress={() => navigation.navigate('Matchmaking')}
+        />
+        <PrimaryButton
           label="Easy Game"
           fullWidth
           onPress={() => {
-            startNewGame('easy');
-            navigation.navigate('Game');
+            void handleStartGameWithAd('easy');
           }}
         />
         <PrimaryButton
           label="Medium Game"
           fullWidth
           onPress={() => {
-            startNewGame('medium');
-            navigation.navigate('Game');
+            void handleStartGameWithAd('medium');
           }}
         />
         <PrimaryButton
           label="Hard Game"
           fullWidth
           onPress={() => {
-            startNewGame('hard');
-            navigation.navigate('Game');
+            void handleStartGameWithAd('hard');
           }}
         />
         <PrimaryButton
@@ -172,6 +183,12 @@ export function HomeScreen({ navigation }: Props) {
             startDailyGame();
             navigation.navigate('Game');
           }}
+        />
+        <PrimaryButton
+          label="Leaderboard"
+          variant="secondary"
+          fullWidth
+          onPress={() => navigation.navigate('Leaderboard')}
         />
         {currentGame ? (
           <PrimaryButton
@@ -203,6 +220,8 @@ export function HomeScreen({ navigation }: Props) {
           onPress={() => navigation.navigate('Settings')}
         />
       </Animated.View>
+
+      <PrimaryButton label="Logout" variant="ghost" fullWidth onPress={logout} />
     </ScreenContainer>
   );
 }

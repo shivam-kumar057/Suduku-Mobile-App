@@ -1,6 +1,6 @@
 # Sudoku Master
 
-Production-oriented React Native Sudoku game built with TypeScript, Zustand, AsyncStorage, React Navigation, and AdMob test integrations.
+Production-oriented React Native Sudoku game built with TypeScript, Zustand, AsyncStorage, React Navigation, Socket.IO client integration, and AdMob test integrations.
 
 ## What’s Included
 
@@ -8,11 +8,13 @@ Production-oriented React Native Sudoku game built with TypeScript, Zustand, Asy
 - Backtracking solver with uniqueness checks
 - Real-time validation with incorrect-cell highlighting
 - Timer plus pause/resume
-- Limited hints, rewarded-ad hints, undo/redo
+- Chance-based gameplay (3 mistakes), rewarded-ad chance refill, undo/redo
 - Daily challenge mode with deterministic seed
 - Persisted progress, stats, and best times
 - Dark/light/system theme support
 - Banner, interstitial, and rewarded AdMob test IDs
+- Multiplayer auth + matchmaking + online match flow
+- Backend MVP with Express, MongoDB, and Socket.IO
 - Unit tests for the Sudoku engine
 
 ## Folder Structure
@@ -21,6 +23,7 @@ Production-oriented React Native Sudoku game built with TypeScript, Zustand, Asy
 src/
   app/
   components/
+  context/
   hooks/
   navigation/
   screens/
@@ -28,19 +31,36 @@ src/
   store/
   types/
   utils/
+
+backend/
+  config/
+  middleware/
+  models/
+  routes/
+  services/
+  sockets/
+  server.js
 ```
 
 ## Setup
 
 1. Use Node `20.19.4+`.
 2. Install Java/Android Studio and Xcode/CocoaPods for device builds.
-3. Install project dependencies:
+3. Install frontend dependencies:
 
 ```bash
 npm install
 ```
 
-4. Install iOS pods:
+4. Install backend dependencies:
+
+```bash
+cd backend
+npm install
+cd ..
+```
+
+5. Install iOS pods:
 
 ```bash
 cd ios
@@ -80,6 +100,56 @@ Run TypeScript check:
 ```bash
 npm run typecheck
 ```
+
+## Run Backend
+
+1. Create env:
+
+```bash
+cd backend
+cp .env.example .env
+```
+
+2. Update `MONGODB_URI` inside `backend/.env` if needed.
+
+3. Start backend:
+
+```bash
+cd backend
+npm run dev
+```
+
+Backend runs on `http://localhost:4000`.
+
+## Multiplayer Flow
+
+- Authentication screen uses `name + generated deviceId` (MVP)
+- Home screen includes:
+  - `Play Online`
+  - `Leaderboard`
+  - coin + profile display
+- Matchmaking emits Socket.IO `join_queue`
+- On `match_found`, app navigates to online game
+- On submit, backend validates and emits `game_result`
+- Result screen shows winner/loser and quick replay
+
+Main frontend files:
+
+- [AuthContext.tsx](/Users/shivamkumar/Desktop/suduku%20game/SudokuGame/src/context/AuthContext.tsx)
+- [api.ts](/Users/shivamkumar/Desktop/suduku%20game/SudokuGame/src/services/api.ts)
+- [socket.ts](/Users/shivamkumar/Desktop/suduku%20game/SudokuGame/src/services/socket.ts)
+- [RootNavigator.tsx](/Users/shivamkumar/Desktop/suduku%20game/SudokuGame/src/navigation/RootNavigator.tsx)
+- [MatchmakingScreen.tsx](/Users/shivamkumar/Desktop/suduku%20game/SudokuGame/src/screens/MatchmakingScreen.tsx)
+- [OnlineGameScreen.tsx](/Users/shivamkumar/Desktop/suduku%20game/SudokuGame/src/screens/OnlineGameScreen.tsx)
+
+Main backend files:
+
+- [server.js](/Users/shivamkumar/Desktop/suduku%20game/SudokuGame/backend/server.js)
+- [gameSocket.js](/Users/shivamkumar/Desktop/suduku%20game/SudokuGame/backend/sockets/gameSocket.js)
+- [matchmakingService.js](/Users/shivamkumar/Desktop/suduku%20game/SudokuGame/backend/services/matchmakingService.js)
+- [sudokuService.js](/Users/shivamkumar/Desktop/suduku%20game/SudokuGame/backend/services/sudokuService.js)
+- [userRoutes.js](/Users/shivamkumar/Desktop/suduku%20game/SudokuGame/backend/routes/userRoutes.js)
+- [leaderboardRoutes.js](/Users/shivamkumar/Desktop/suduku%20game/SudokuGame/backend/routes/leaderboardRoutes.js)
 
 ## Core Logic
 
@@ -127,7 +197,7 @@ Before release:
 
 Zustand persists these slices with AsyncStorage:
 
-- current game state
+- current single-player game state
 - stats and best times
 - settings
 - daily challenge history
@@ -161,5 +231,6 @@ cd android
 ## Notes
 
 - The game is optimized around memoized cells and a centralized Zustand store.
+- Multiplayer mode intentionally does not sync every move (performance-optimized). Only lifecycle events are synced.
 - The RN template’s default sample test was removed because it relied on native modules not relevant to this app; engine coverage remains in `src/__tests__/sudokuEngine.test.ts`.
 - Sound effects are left as a clean extension point in settings; vibration feedback is implemented with the built-in React Native API.
